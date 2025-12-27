@@ -1,0 +1,143 @@
+/* Modal Overlay */
+.modalOverlay {
+  background-color: rgba(0, 0, 0, 0.6); /* slight transparency */
+  backdrop-filter: blur(6px); /* modern blur effect */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: fixed;
+  inset: 0;
+  z-index: 999;
+  opacity: 0;
+  pointer-events: none;
+  animation: fadeInOverlay 0.3s ease-in forwards;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+}
+
+/* Modal Content */
+.modalContent {
+  background: #0d1627; /* dark slate */
+  color: #fff;
+  /* padding: 2rem; */
+  border-radius: 1rem;
+  width: 100%;
+  /* max-width: 500px; */
+  /* min-height: 500px; */
+  padding: 2rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  position: relative;
+  transform: translateY(-20px);
+  opacity: 0;
+  animation: slideUp 0.3s ease-out forwards;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4);
+
+  max-height: 90vh;
+  overflow-y: auto;
+  margin: 1rem;
+  max-width: 24rem; /* 384px */
+}
+
+.modalContent.no-scrollbar {
+  overflow-y: auto;
+  scrollbar-width: none; /* For Firefox */
+  -ms-overflow-style: none; /* For Internet Explorer and Edge */
+}
+
+.modalContent.no-scrollbar::-webkit-scrollbar {
+  display: none; /* For Chrome, Safari, and other WebKit browsers */
+}
+
+@media (min-width: 640px) {
+  .modalContent {
+    max-width: 32rem; /* 512px */
+  }
+}
+
+@media (min-width: 768px) {
+  .modalContent {
+    max-width: 32rem; /* 576px */
+  }
+}
+
+/* Fade-in Overlay Animation */
+@keyframes fadeInOverlay {
+  0% {
+    opacity: 0;
+    pointer-events: none;
+  }
+  100% {
+    opacity: 1;
+    pointer-events: auto;
+  }
+}
+
+/* Slide-up Modal Content Animation */
+@keyframes fadeInOverlay {
+  0% {
+    opacity: 0;
+    pointer-events: none;
+  }
+  100% {
+    opacity: 1;
+    pointer-events: auto;
+  }
+}
+
+@keyframes slideUp {
+  0% {
+    transform: translateY(-20px);
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.modalHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.modalHeader h2 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #ffffff;
+}
+
+.closeModalButton {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #9ca3af; /* gray-400 */
+  font-size: 1.5rem;
+  transition: color 0.2s ease-in-out;
+}
+
+.closeModalButton:hover {
+  color: #f87171; /* red-400 */
+}
+
+.otp-input {
+  width: 48px;
+  height: 48px;
+  text-align: center;
+  font-size: 16px;
+  color: #fff;
+  background: #1e293b;
+  border: 1px solid #4b5563;
+  border-radius: 4px;
+  transition: border-color 0.3s, box-shadow 0.3s;
+}
+
+.otp-input:focus {
+  border-color: #f59e0b;
+  box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.5);
+}
