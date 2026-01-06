@@ -7,9 +7,11 @@ import { BsBagCheckFill } from "react-icons/bs";
 import { FaHeart } from "react-icons/fa6";
 import { toast } from "react-toastify";
 import axios from "axios";
+import CheckoutWithoutLoginModal from "@/modals/CheckoutWithoutLoginModal";
 
 const Varients = ({ product }) => {
   const [isCheckoutModalOpen, setIsCheckoutModalOpen] = useState(false);
+  const [isGuestCheckoutOpen, setIsGuestCheckoutOpen] = useState(false);
   const [userWishlist, setuserWishlist] = useState([]);
 
   const { user } = useContext(AppContext);
@@ -29,14 +31,28 @@ const Varients = ({ product }) => {
   const openCheckoutModal = () => setIsCheckoutModalOpen(true);
   const closeCheckoutModal = () => setIsCheckoutModalOpen(false);
 
+  const openGuestCheckoutModal = () => setIsGuestCheckoutOpen(true);
+  const closeGuestCheckoutModal = () => setIsGuestCheckoutOpen(false);
+
   const handleCheckoutModal = () => {
-    if (!user._id) {
-      return toast.warning("Please login to checkout");
+    const hasSizes = product.sizes.length > 0;
+    const hasColors = product.color.length > 0;
+
+    if (!user?._id) {
+      if (hasSizes && !selectedSize) {
+        return toast.warn("Please select size to proceed");
+      }
+      if (hasColors && !selectedColor) {
+        return toast.warn("Please select color to proceed");
+      }
+      openGuestCheckoutModal();
+      return;
     }
-    if (product.sizes.length && !selectedSize) {
+
+    if (hasSizes && !selectedSize) {
       return toast.warn("Please select size to proceed");
     }
-    if (product.color.length && !selectedColor) {
+    if (hasColors && !selectedColor) {
       return toast.warn("Please select color to proceed");
     }
     openCheckoutModal();
@@ -53,7 +69,7 @@ const Varients = ({ product }) => {
 
       if (response.data.success) {
         toast.success("Product added to wishlist");
-        setuserWishlist((prev) => [...prev, product]);
+        setuserWishlist((prev) => [...prev, product._id]);
       }
     } catch (error) {
       console.log(error);
@@ -72,9 +88,7 @@ const Varients = ({ product }) => {
 
       if (response.data.success) {
         toast.success("Product removed from wishlist");
-        setuserWishlist((prev) =>
-          prev.filter((p) => String(p._id) !== String(product._id))
-        );
+        setuserWishlist((prev) => prev.filter((id) => id !== product._id));
       }
     } catch (error) {
       console.log(error);
@@ -100,6 +114,8 @@ const Varients = ({ product }) => {
       fetchWishlist();
     }
   }, [user]);
+
+  const isInWishlist = userWishlist.some((id) => id === product._id);
 
   return (
     <>
@@ -205,7 +221,7 @@ const Varients = ({ product }) => {
         <button
           className={`flex-1 py-2 sm:py-3 px-4 sm:px-6 rounded-lg font-semibold text-base shadow-md transition-all duration-200 flex items-center justify-center
             ${
-              userWishlist.some((p) => String(p._id) === String(product._id))
+              isInWishlist
                 ? "bg-red-100 text-red-600 hover:bg-red-200"
                 : "bg-gray-100 text-gray-700 hover:bg-gray-200"
             }`}
@@ -214,16 +230,14 @@ const Varients = ({ product }) => {
               toast.warning("Please login to manage wishlist");
               return;
             }
-            if (
-              userWishlist.some((p) => String(p._id) === String(product._id))
-            ) {
+            if (isInWishlist) {
               handleRemoveFromWishlist();
             } else {
               handleAddToWishlist();
             }
           }}
         >
-          {userWishlist.some((p) => String(p._id) === String(product._id)) ? (
+          {isInWishlist ? (
             <>
               <FaHeart size={18} className="me-2 text-red-600" />
               Remove from Wishlist
@@ -240,6 +254,15 @@ const Varients = ({ product }) => {
       <CheckoutModal
         isOpen={isCheckoutModalOpen}
         closeModal={closeCheckoutModal}
+        product={product}
+        selectedSize={selectedSize}
+        selectedColor={selectedColor}
+        quantity={quantity}
+      />
+
+      <CheckoutWithoutLoginModal
+        isOpen={isGuestCheckoutOpen}
+        closeModal={closeGuestCheckoutModal}
         product={product}
         selectedSize={selectedSize}
         selectedColor={selectedColor}

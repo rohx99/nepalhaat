@@ -7,6 +7,8 @@ import { AppContext } from "@/context/AppContext";
 import { toast } from "react-toastify";
 import axios from "axios";
 import secureLocalStorage from "react-secure-storage";
+import Swal from "sweetalert2";
+import { useRouter } from "next/navigation";
 
 export default function Profile() {
   const [formData, setFormData] = useState({
@@ -24,7 +26,9 @@ export default function Profile() {
   const [previewUrl, setPreviewUrl] = useState("");
   const [errors, setErrors] = useState({});
   const [isUploading, setIsUploading] = useState(false);
-  const { user, setUser } = useContext(AppContext);
+  const { user, setUser, logout } = useContext(AppContext);
+
+  const router = useRouter();
 
   useEffect(() => {
     if (user) {
@@ -52,7 +56,13 @@ export default function Profile() {
 
   // Validate file type and size
   const validateFile = (file) => {
-    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+    const allowedTypes = [
+      "image/jpeg",
+      "image/jpg",
+      "image/png",
+      "image/gif",
+      "image/webp",
+    ];
     const maxSize = 5 * 1024 * 1024; // 5MB
 
     if (!allowedTypes.includes(file.type)) {
@@ -75,18 +85,18 @@ export default function Profile() {
       // Validate file
       if (!validateFile(file)) {
         // Reset the input
-        e.target.value = '';
+        e.target.value = "";
         return;
       }
 
       setIsUploading(true);
       setProfilePic(file);
-      
+
       // Clean up previous preview URL
       if (previewUrl && previewUrl.startsWith("blob:")) {
         URL.revokeObjectURL(previewUrl);
       }
-      
+
       // Create preview URL for immediate display
       const fileUrl = URL.createObjectURL(file);
       setPreviewUrl(fileUrl);
@@ -106,12 +116,12 @@ export default function Profile() {
   // Get the full image URL for display
   const getImageUrl = (url) => {
     if (!url) return "/default-avatar.png";
-    
+
     // Handle blob URLs directly (for file previews)
     if (url.startsWith("blob:")) {
       return url;
     }
-    
+
     // Handle full HTTP/HTTPS URLs
     if (url.startsWith("http://") || url.startsWith("https://")) {
       return url;
@@ -123,11 +133,11 @@ export default function Profile() {
       // If no base URL is configured, return the relative path as is
       return url.startsWith("/") ? url : `/${url}`;
     }
-    
+
     const cleanBase = baseUrl.replace(/\/$/, "");
     const cleanPath = url.replace(/^\//, "").replace(/\\/g, "/");
     const fullUrl = `${cleanBase}/${cleanPath}`;
-    
+
     return fullUrl;
   };
 
@@ -167,7 +177,7 @@ export default function Profile() {
         {
           headers: {
             Authorization: `Bearer ${secureLocalStorage.getItem("token")}`,
-            'Content-Type': 'multipart/form-data',
+            "Content-Type": "multipart/form-data",
           },
         }
       );
@@ -183,14 +193,66 @@ export default function Profile() {
       }
     } catch (error) {
       console.log(error);
-      toast.error(`${error.response?.data?.message || 'Failed to update profile'}`);
+      toast.error(
+        `${error.response?.data?.message || "Failed to update profile"}`
+      );
+    }
+  };
+
+  const handleAccountDeletion = async () => {
+    try {
+      // Show confirmation prompt using SweetAlert
+      const result = await Swal.fire({
+        title: "Are you sure?",
+        text: "Once your account is deleted, you will not be able to recover it!",
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonColor: "#d33",
+        cancelButtonColor: "#3085d6",
+        confirmButtonText: "Yes, delete my account",
+      });
+
+      // If the user confirms, proceed with the account deletion
+      if (result.isConfirmed) {
+        // Call the API to delete the user's account
+        const response = await axios.delete(
+          `${process.env.NEXT_PUBLIC_API_BASE_URL}/customers/${user._id}`,
+          {
+            headers: {
+              Authorization: `Bearer ${secureLocalStorage.getItem("token")}`,
+            },
+          }
+        );
+
+        if (response.data.success) {
+          Swal.fire({
+            icon: "success",
+            title: "Account Deleted!",
+            text: "Your account has been successfully deleted.",
+          });
+          logout();
+        } else {
+          Swal.fire({
+            icon: "error",
+            title: "Error!",
+            text: response.data.message || "Failed to delete your account.",
+          });
+        }
+      }
+    } catch (error) {
+      console.log(error);
+      Swal.fire({
+        icon: "error",
+        title: "Error!",
+        text: "Something went wrong while deleting your account. Please try again later.",
+      });
     }
   };
 
   const imageUrl = getImageUrl(previewUrl);
 
   return (
-    <div className="min-h-[70vh] flex flex-col items-center justify-center bg-gray-100 px-4 py-6 sm:px-6 sm:py-8">
+    <div className="min-h-[80vh] flex flex-col items-center justify-center bg-gray-100 px-4 py-6 sm:px-6 sm:py-8">
       <div className="flex flex-col lg:flex-row items-center justify-evenly bg-white rounded-2xl shadow-xl w-full max-w-6xl px-4 py-6 sm:px-6 sm:py-8 gap-6 lg:gap-10">
         {/* Profile Picture */}
         <div
@@ -217,11 +279,11 @@ export default function Profile() {
               <MdVerified className="text-sky-500 ms-1 mb-1" />
             </h4>
           </div>
-          
+
           {/* Enhanced Edit Button with better mobile interaction */}
           <div className="absolute bottom-20 sm:bottom-24 lg:bottom-28 right-4 sm:right-6 lg:right-8 z-20">
-            <label 
-              htmlFor="edit-pp" 
+            <label
+              htmlFor="edit-pp"
               className="cursor-pointer block"
               title="Update Profile Picture"
             >
@@ -245,7 +307,10 @@ export default function Profile() {
 
         {/* Form */}
         <div className="w-full max-w-2xl lg:max-w-3xl">
-          <form onSubmit={handleSubmit} className="text-black space-y-6 sm:space-y-8">
+          <form
+            onSubmit={handleSubmit}
+            className="text-black space-y-6 sm:space-y-8"
+          >
             <div className="flex flex-col lg:flex-row justify-between gap-4 lg:gap-6">
               {/* Left section */}
               <section className="space-y-4 sm:space-y-6 flex-1">
@@ -329,16 +394,30 @@ export default function Profile() {
             </div>
 
             {errors.form && (
-              <p className="text-red-500 text-xs sm:text-sm text-center">{errors.form}</p>
+              <p className="text-red-500 text-xs sm:text-sm text-center">
+                {errors.form}
+              </p>
             )}
 
-            <button
-              type="submit"
-              className="w-full p-2 sm:p-3 bg-gradient-to-r from-yellow-500 to-yellow-600 text-white rounded-lg hover:from-yellow-600 hover:to-yellow-700 transition-all duration-200 font-semibold text-sm sm:text-base"
-            >
-              Update Profile
-            </button>
+            <div className="flex gap-5">
+              <button
+                type="button"
+                onClick={() => {
+                  handleAccountDeletion();
+                }}
+                className="w-full p-3 bg-gradient-to-r from-red-500 to-red-700 text-white rounded-lg hover:from-red-600 hover:to-red-700 transition-all duration-200 font-semibold text-xs sm:text-base"
+              >
+                🗑️ Delete My Account
+              </button>
+              <button
+                type="submit"
+                className="w-full p-3 bg-gradient-to-r from-yellow-500 to-yellow-600 text-white rounded-lg hover:from-yellow-600 hover:to-yellow-700 transition-all duration-200 font-semibold text-xs sm:text-base"
+              >
+                ✅ Update My Profile
+              </button>
+            </div>
           </form>
+          <div className="mt-2"></div>
         </div>
       </div>
     </div>
